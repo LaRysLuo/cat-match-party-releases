@@ -1,0 +1,2 @@
+0dc40f5928ff3b12ffcd1171cb5bd5b68419ec29d8f6cc2e120720530a57a119  CatMatchParty-Windows-x86_64.zip
+aaacbaae25c9e2402bb6e7ccfcf489d43b16fffda658d880b5b1bbdfc4c5a4e9  CatMatchParty-macOS-universal.zip
