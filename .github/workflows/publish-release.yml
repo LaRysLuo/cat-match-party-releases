@@ -1,0 +1,56 @@
+name: Publish Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Release tag to publish, for example v0.1.0"
+        required: true
+        type: string
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+env:
+  RELEASE_TAG: ${{ github.ref_type == 'tag' && github.ref_name || inputs.release_tag }}
+
+jobs:
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out packaged builds
+        uses: actions/checkout@v4
+
+      - name: Verify packaged builds
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "artifacts/$RELEASE_TAG/CatMatchParty-Windows-x86_64.zip"
+          test -f "artifacts/$RELEASE_TAG/CatMatchParty-macOS-universal.zip"
+          test -f "artifacts/$RELEASE_TAG/SHA256SUMS.txt"
+          (cd "artifacts/$RELEASE_TAG" && sha256sum --check SHA256SUMS.txt)
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          RELEASE_DIR="artifacts/$RELEASE_TAG"
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" \
+              "$RELEASE_DIR/CatMatchParty-Windows-x86_64.zip" \
+              "$RELEASE_DIR/CatMatchParty-macOS-universal.zip" \
+              "$RELEASE_DIR/SHA256SUMS.txt" --clobber
+          else
+            gh release create "$RELEASE_TAG" \
+              "$RELEASE_DIR/CatMatchParty-Windows-x86_64.zip" \
+              "$RELEASE_DIR/CatMatchParty-macOS-universal.zip" \
+              "$RELEASE_DIR/SHA256SUMS.txt" \
+              --title "猫咪续命派对 $RELEASE_TAG" \
+              --generate-notes
+          fi
